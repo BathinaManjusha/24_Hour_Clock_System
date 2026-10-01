@@ -1,0 +1,137 @@
+`timescale 1ns/1ps
+
+module hour_24_tb;
+
+reg clk_1sec;
+reg reset;
+
+wire [5:0] seconds;
+wire [5:0] minutes;
+wire [4:0] hours;
+
+
+// Design Under Test
+hour_24 dut (
+    .clk_1sec(clk_1sec),
+    .reset(reset),
+    .seconds(seconds),
+    .minutes(minutes),
+    .hours(hours)
+);
+
+
+// 1-second simulation clock
+always #5 clk_1sec = ~clk_1sec;
+
+
+initial begin
+
+    // Waveform file
+    $dumpfile("dump.vcd");
+    $dumpvars(0, hour_24_tb);
+
+    // Initial values
+    clk_1sec = 1'b0;
+    reset    = 1'b1;
+
+    // Reset
+    #12;
+    reset = 1'b0;
+
+
+    // -------------------------
+    // TEST 1: 00:00:01
+    // -------------------------
+    @(posedge clk_1sec);
+    #1;
+
+    if ((hours == 5'd0) &&
+        (minutes == 6'd0) &&
+        (seconds == 6'd1))
+
+        $display("PASS : 00:00:01");
+
+    else
+        $display("FAIL : 00:00:01");
+
+
+    // -------------------------
+    // TEST 2: 00:01:00
+    // -------------------------
+    repeat (59)
+        @(posedge clk_1sec);
+
+    #1;
+
+    if ((hours == 5'd0) &&
+        (minutes == 6'd1) &&
+        (seconds == 6'd0))
+
+        $display("PASS : 00:01:00");
+
+    else
+        $display("FAIL : 00:01:00");
+
+
+    // -------------------------
+    // TEST 3: 01:00:00
+    // -------------------------
+    repeat (3540)
+        @(posedge clk_1sec);
+
+    #1;
+
+    if ((hours == 5'd1) &&
+        (minutes == 6'd0) &&
+        (seconds == 6'd0))
+
+        $display("PASS : 01:00:00");
+
+    else
+        $display("FAIL : 01:00:00");
+
+
+    // -------------------------
+    // TEST 4: 23:59:59
+    // -------------------------
+    repeat (82799)
+        @(posedge clk_1sec);
+
+    #1;
+
+    if ((hours == 5'd23) &&
+        (minutes == 6'd59) &&
+        (seconds == 6'd59))
+
+        $display("PASS : 23:59:59");
+
+    else
+        $display("FAIL : 23:59:59");
+
+
+    // -------------------------
+    // TEST 5: 24-HOUR ROLLOVER
+    // -------------------------
+    @(posedge clk_1sec);
+
+    #1;
+
+    if ((hours == 5'd0) &&
+        (minutes == 6'd0) &&
+        (seconds == 6'd0))
+
+        $display("PASS : 24-HOUR ROLLOVER");
+
+    else
+        $display("FAIL : 24-HOUR ROLLOVER");
+
+
+    $display("--------------------------------");
+    $display("ALL TESTS COMPLETED");
+    $display("--------------------------------");
+
+    $finish;
+
+end
+
+endmodule
